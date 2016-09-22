@@ -1,0 +1,50 @@
+#!/bin/bash
+
+namefunction=$(ls /sys/class/net | head -1);
+LOGICALNAME=$(echo $namefunction)
+
+while [[ $# -gt 1 ]]
+do
+key="$1"
+
+case $key in
+    -f|--filename) 
+    EXTENSION="$2"
+    shift # past argument
+    ;;
+    -n|--name)
+    SEARCHPATH="$2"
+    shift # past argument
+    ;;
+    -l|--lib)
+    LIBPATH="$2"
+    shift # past argument
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+shift # past argument or value
+done
+#echo FILE EXTENSION  = "${EXTENSION}"
+#echo SEARCH PATH     = "${SEARCHPATH}"
+
+
+
+### Creates 3 VMs
+
+for run in {1..3}
+do
+num = $(echo $run)
+VBoxManage createhd --filename "${EXTENSION}""${run}".vdi --size 32768 &&
+VBoxManage createvm --name "${SEARCHPATH}""${run}" --ostype "Linux_64" --register &&
+VBoxManage storagectl "${SEARCHPATH}""${run}" --name "SATA Controller" --add sata --controller IntelAHCI &&
+VBoxManage storageattach "${SEARCHPATH}""${run}" --storagectl "SATA Controller" --port 0 --device 0 --type hdd --medium "${EXTENSION}""${run}".vdi &&
+VBoxManage storagectl "${SEARCHPATH}""${run}" --name "IDE Controller" --add ide &&
+VBoxManage storageattach "${SEARCHPATH}""${run}" --storagectl "IDE Controller" --port 0 --device 0 --type dvddrive --medium "${LIBPATH}"
+VBoxManage modifyvm "${SEARCHPATH}""${run}" --ioapic on
+VBoxManage modifyvm "${SEARCHPATH}""${run}" --boot1 dvd --boot2 disk --boot3 none --boot4 none
+VBoxManage modifyvm "${SEARCHPATH}""${run}" --memory 1024 --vram 128
+VBoxManage modifyvm "${SEARCHPATH}""${run}" --nic1 bridged --bridgeadapter1 "${LOGICALNAME}"
+
+done

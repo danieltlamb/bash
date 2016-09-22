@@ -1,0 +1,210 @@
+#!/bin/bash
+
+#Wed Jul 27 14:46:15 2016
+
+#######
+####### NOTE:  Some of the file locations may be different on your device.
+#######
+
+#####Function to get IP from nslookup
+function GetIP {
+
+	Me=$(hostname)
+	MYIP=$(nslookup ${Me} | grep Address | awk -F'	' '{print $2}' | tail -1);
+	return;
+
+}
+
+function GetEncap {
+
+	ENCAP=$(exec 3>&2
+exec 2> /dev/null
+lshw -class network | grep description: | awk -F' ' '{print $2}' | tail -1);
+
+	return;
+}
+
+function Getinet {
+
+	INET=$(echo $(ip -o -f inet addr show $default_if | awk '{print $4}' | tail -1));
+
+        return;
+}
+
+function Getloinet {
+
+        LOINET=$(echo $(ip -o -f inet addr show $default_if | awk '{print $4}' | head -1));
+
+        return;
+}
+
+function GetIPvsix {
+
+	IPVSIX=$(echo $(ip -6 addr | grep inet6 | awk '{print $2}' | awk '{print $1}' | tail -1
+));
+
+	loIPVSIX=$(echo $(ip -6 addr | grep inet6 | awk '{print $2}' | awk '{print $1}' | head -1
+));
+
+
+        
+return;
+}
+
+
+namefunction=$(ls /sys/class/net | head -1);
+
+LOGICALNAME=$(echo $namefunction)
+
+#####Defines variables to reference file locations
+
+BASE='/sys/class/net'
+IF=$LOGICALNAME ####This one may be something like eth0 on your device.
+LO="lo"
+ER="statistics"
+
+#####MAC address
+
+address="$BASE/$IF/address"
+
+#####Receiving errors
+
+rxpackets="$BASE/$IF/$ER/rx_packets"
+rxerrors="$BASE/$IF/$ER/rx_errors"
+rxdropped="$BASE/$IF/$ER/rx_dropped"
+rxoverruns="$BASE/$IF/$ER/rx_over_errors"
+rxbytes="$BASE/$IF/$ER/rx_bytes"
+rxframe="$BASE/$IF/$ER/rx_frame_errors"
+
+#####Transmission errors
+
+txpackets="$BASE/$IF/$ER/tx_packets"
+txerrors="$BASE/$IF/$ER/tx_errors"
+txdropped="$BASE/$IF/$ER/tx_dropped"
+txbytes="$BASE/$IF/$ER/tx_bytes"
+txcarrier="$BASE/$IF/$ER/tx_carrier_errors"
+
+####Collisions, etc.
+
+collisions="$BASE/$IF/$ER/collisions"
+mtu="$BASE/$IF/mtu"
+######
+
+#####Dropping these guys into some handy handles.
+
+ADDRESS=$(cat $address)
+
+RXPACKETS=$(cat $rxpackets)
+RXERRORS=$(cat $rxerrors)
+RXDROPPED=$(cat $rxdropped)
+RXOVERRUNS=$(cat $rxoverruns)
+RXBYTES=$(cat $rxbytes)
+RXFRAME=$(cat $rxframe)
+
+TXPACKETS=$(cat $txpackets)
+TXERRORS=$(cat $txerrors)
+TXDROPPED=$(cat $txdropped)
+TXBYTES=$(cat $txbytes)
+TXCARRIER=$(cat $txcarrier)
+
+MTU=$(cat $mtu)
+COLLISIONS=$(cat $collisions)
+
+######LO, the second half of ifconfig
+
+loaddress="$BASE/$LO/address"
+
+lorxpackets="$BASE/$LO/$ER/rx_packets"
+lorxerrors="$BASE/$LO/$ER/rx_errors"
+lorxdropped="$BASE/$LO/$ER/rx_dropped"
+lorxoverruns="$BASE/$LO/$ER/rx_over_errors"
+lorxbytes="$BASE/$LO/$ER/rx_bytes"
+lorxframe="$BASE/$LO/$ER/rx_frame_errors"
+
+lotxpackets="$BASE/$LO/$ER/tx_packets"
+lotxerrors="$BASE/$LO/$ER/tx_errors"
+lotxdropped="$BASE/$LO/$ER/tx_dropped"
+lotxbytes="$BASE/$LO/$ER/tx_bytes"
+lotxcarrier="$BASE/$LO/$ER/tx_carrier_errors"
+
+locollisions="$BASE/$LO/$ER/collisions"
+lomtu="$BASE/$LO/mtu"
+
+######
+
+LOADDRESS=$(cat $loaddress)
+
+LORXPACKETS=$(cat $lorxpackets)
+LORXERRORS=$(cat $lorxerrors)
+LORXDROPPED=$(cat $lorxdropped)
+LORXOVERRUNS=$(cat $lorxoverruns)
+LORXBYTES=$(cat $lorxbytes)
+LORXFRAME=$(cat $lorxframe)
+
+LOTXPACKETS=$(cat $lotxpackets)
+LOTXERRORS=$(cat $lotxerrors)
+LOTXDROPPED=$(cat $lotxdropped)
+LOTXBYTES=$(cat $lotxbytes)
+LOTXCARRIER=$(cat $lotxcarrier)
+
+LOMTU=$(cat $lomtu)
+LOCOLLISIONS=$(cat $locollisions)
+
+#####From here on is what gets printed to the screen:
+
+
+Mask=$(ip -o -f inet addr show | awk '/scope global/ {print $2, $4}')
+
+echo "-----"
+echo $IF
+echo "-----"
+GetEncap
+echo "Link encap: $ENCAP"
+echo "HWaddr: $ADDRESS"
+Getinet
+echo "inet addr/mask: $INET"
+GetIPvsix
+echo "inet6 addr: $IPVSIX"
+echo "-"
+echo "RX packets:$RXPACKETS"
+echo "RX errors:$RXERRORS"
+echo "RX dropped:$RXDROPPED"
+echo "RX overrun errors:$RXOVERRUNS"
+echo "RX bytes:$RXBYTES"
+echo "RX frame errors:$RXFRAME"
+echo "-"
+echo "TX packets:$TXPACKETS"
+echo "TX errors:$TXERRORS"
+echo "TX dropped:$TXDROPPED"
+echo "TX bytes:$TXBYTES"
+echo "TX carrier errors:$TXCARRIER"
+echo "-"
+echo "MTU: $MTU"
+echo "Collisions:$COLLISIONS"
+echo "-----"
+echo $LO
+echo "-----"
+echo "Link enap: Local Loopback"
+echo "HWaddr $LOADDRESS"
+Getloinet
+echo "inet addr/mask: $LOINET"
+GetIPvsix
+echo "inet6 addr: $loIPVSIX"
+echo "-"
+echo "RX packets:$LORXPACKETS"
+echo "RX errors:$LORXERRORS"
+echo "RX dropped:$LORXDROPPED"
+echo "RX overrun errors:$LORXOVERRUNS"
+echo "RX bytes:$LORXBYTES"
+echo "RX frame errors:$LORXFRAME"
+echo "-"
+echo "TX packets:$LOTXPACKETS"
+echo "TX errors:$LOTXERRORS"
+echo "TX dropped:$LOTXDROPPED"
+echo "TX bytes:$LOTXBYTES"
+echo "TX carrier errors:$LOTXCARRIER"
+echo "-"
+echo "MTU: $LOMTU"
+echo "Collisions:$LOCOLLISIONS"
+echo "-----"
+

@@ -1,0 +1,59 @@
+#!/bin/bash
+
+#Wed Jul 27 14:46:15 2016
+
+echo "_____________________________________________________________"
+echo " "
+echo "Local Address: -- L.A. Port: -- Remote Address: -- R.A. Port:"
+echo "_____________________________________________________________"
+
+IFS=$'\n'
+i=1
+for j in `cat /proc/net/tcp`
+do
+test $i -eq 1 && ((i=i+1)) && continue
+
+### Local Address ###
+a=$(echo $j | awk '{print $2}' | cut -c 1-2);
+b=$(echo $j | awk '{print $2}' | cut -c 3-4);
+c=$(echo $j | awk '{print $2}' | cut -c 5-6);
+d=$(echo $j | awk '{print $2}' | cut -c 7-8);
+
+### Remote Address ###
+o=$(echo $j | awk '{print $3}' | cut -c 1-2);
+p=$(echo $j | awk '{print $3}' | cut -c 3-4);
+q=$(echo $j | awk '{print $3}' | cut -c 5-6);
+s=$(echo $j | awk '{print $3}' | cut -c 7-8);
+
+### Local Address Port ###
+t=$(echo $j | awk -F':' '{print $3}' | cut -c 1-4);
+
+### Remote Address Port ###
+u=$(echo $j | awk -F':' '{print $4}' | cut -c 1-4);
+
+### L.A. Hex to Dec ###
+e=$(echo $((0x$a)));
+f=$(echo $((0x$b)));
+g=$(echo $((0x$c)));
+h=$(echo $((0x$d)));
+
+### R.A. Hex to Dec ###
+k=$(echo $((0x$o)));
+l=$(echo $((0x$p)));
+m=$(echo $((0x$q)));
+n=$(echo $((0x$s)));
+
+### L.A. Port Hex to Dec ###
+y=$(echo $((0x$t)));
+
+### R.A. Port Hex to Dec ###
+z=$(echo $((0x$u)));
+### Piecing together the octets ###
+LOCALADDRESS=$(echo $h.$g.$f.$e);
+LOCALADDRESSPORT=$(echo $y);
+REMOTEADDRESS=$(echo $n.$m.$l.$k);
+REMOTEADDRESSPORT=$(echo $z);
+
+echo "  "$LOCALADDRESS"    --   "$LOCALADDRESSPORT"    --  "$REMOTEADDRESS"   --   "$REMOTEADDRESSPORT
+
+done

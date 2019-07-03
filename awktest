@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cat nums | awk -F' ' 'BEGIN{total=0};{total+=$1};END{avg = total/NR; print "Average is: ",avg "  Total is: ",total}'
+cat nums | awk -F' ' '/'5'/ {print NR, $0}' 
